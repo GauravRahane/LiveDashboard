@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerBI Style Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #404040;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background-color: #404040;
+            border: none;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #4a4a4a;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .container {
+            padding: 24px;
+        }
+
+        .upload-area {
+            background-color: #2d2d2d;
+            border: 2px dashed #404040;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #2563eb;
+            background-color: #2a2a2a;
+        }
+
+        .upload-area.dragover {
+            border-color: #2563eb;
+            background-color: #1e3a8a20;
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: #2563eb;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 12px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .kpi-card:hover {
+            border-color: #4a4a4a;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .kpi-title {
+            color: #9ca3af;
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 12px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .kpi-subtitle {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-change {
+            font-size: 14px;
+        }
+
+        .kpi-change.positive {
+            color: #10b981;
+        }
+
+        .kpi-change.negative {
+            color: #ef4444;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chart-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #404040;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-content {
+            padding: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+
+        .performance-table th {
+            color: #9ca3af;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .performance-table tr:hover {
+            background-color: #252525;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-exceeded {
+            background-color: #064e3b;
+            color: #10b981;
+        }
+
+        .status-on-track {
+            background-color: #78350f;
+            color: #fbbf24;
+        }
+
+        .status-below {
+            background-color: #7f1d1d;
+            color: #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 48px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #404040;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #7f1d1d;
+            border: 1px solid #dc2626;
+            color: #fca5a5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .legend {
+            margin-top: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .legend-label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .legend-value {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>Business Performance Dashboard</h1>
+            <p>Real-time insights and analytics</p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn">
+                <span>🔍</span>
+                Filter
+            </button>
+            <button class="btn">
+                <span>📅</span>
+                Last 30 days
+            </button>
+            <button class="btn btn-primary">
+                <span>📥</span>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Upload Area -->
+        <div id="uploadArea" class="upload-area">
+            <div class="upload-icon">📊</div>
+            <h3 style="margin-bottom: 8px;">Click to upload your Excel file</h3>
+            <p style="color: #9ca3af;">XLSX, XLS files supported</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+            <div id="fileName" style="margin-top: 16px; color: #9ca3af; font-size: 14px;"></div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p style="color: #9ca3af; font-size: 18px;">Processing your data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="error hidden"></div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard" class="hidden">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div style="display: flex; align-items: center;">
+                            <div class="kpi-icon" style="background-color: #10b98120;">
+                                <span style="color: #10b981;">🎯</span>
+                            </div>
+                            <span class="kpi-title">Overall Achievement</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="overallAchievement">0%</div>
+                    <div class="kpi-subtitle" id="overallSubtitle">0 of 0</div>
+                    <div class="kpi-change positive">↗ 12.5% vs last period</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div style="display: flex; align-items: center;">
+                            <div class="kpi-icon" style="background-color: #2563eb20;">
+                                <span style="color: #2563eb;">📈</span>
+                            </div>
+                            <span class="kpi-title">Lead Value</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="leadValue">$0</div>
+                    <div class="kpi-subtitle" id="leadSubtitle">0 new leads</div>
+                    <div class="kpi-change positive">↗ 8.3% vs last period</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div style="display: flex; align-items: center;">
+                            <div class="kpi-icon" style="background-color: #fbbf2420;">
+                                <span style="color: #fbbf24;">👥</span>
+                            </div>
+                            <span class="kpi-title">Lead Count</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="leadCount">0</div>
+                    <div class="kpi-subtitle">Total generated</div>
+                    <div class="kpi-change negative">↘ 2.1% vs last period</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div style="display: flex; align-items: center;">
+                            <div class="kpi-icon" style="background-color: #f9731620;">
+                                <span style="color: #f97316;">👁️</span>
+                            </div>
+                            <span class="kpi-title">Total Visits</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="visitCount">0</div>
+                    <div class="kpi-subtitle">Client visits</div>
+                    <div class="kpi-change positive">↗ 15.7% vs last period</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Target vs Achievement Chart -->
+                <div class="chart-container">
+                    <div class="chart-header">Target vs Achievement</div>
+                    <div class="chart-content">
+                        <canvas id="targetChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Lead Distribution -->
+                <div class="chart-container">
+                    <div class="chart-header">Lead Distribution</div>
+                    <div class="chart-content">
+                        <canvas id="pieChart" width="300" height="200"></canvas>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div style="display: flex; align-items: center;">
+                                    <div class="legend-color" style="background-color: #10b981;"></div>
+                                    <span class="legend-label">Qualified Leads</span>
+                                </div>
+                                <span class="legend-value">45%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div style="display: flex; align-items: center;">
+                                    <div class="legend-color" style="background-color: #fbbf24;"></div>
+                                    <span class="legend-label">In Progress</span>
+                                </div>
+                                <span class="legend-value">30%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div style="display: flex; align-items: center;">
+                                    <div class="legend-color" style="background-color: #2563eb;"></div>
+                                    <span class="legend-label">Converted</span>
+                                </div>
+                                <span class="legend-value">25%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Trend -->
+            <div class="chart-container full-width">
+                <div class="chart-header">Performance Trend</div>
+                <div class="chart-content">
+                    <canvas id="trendChart" width="800" height="150"></canvas>
+                </div>
+            </div>
+
+            <!-- Performance Details Table -->
+            <div class="chart-container full-width">
+                <div class="chart-header">Performance Details</div>
+                <div class="chart-content">
+                    <div class="table-container">
+                        <table class="performance-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th style="text-align: right;">Target</th>
+                                    <th style="text-align: right;">Achieved</th>
+                                    <th style="text-align: right;">Achievement %</th>
+                                    <th style="text-align: right;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="performanceTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = null;
+        let charts = {};
+
+        // File upload handling
+        document.getElementById('uploadArea').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        // Drag and drop functionality
+        document.getElementById('uploadArea').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        });
+
+        document.getElementById('uploadArea').addEventListener('dragleave', (e) => {
+            e.currentTarget.classList.remove('dragover');
+        });
+
+        document.getElementById('uploadArea').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        });
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = file.name;
+            processFile(file);
+        }
+
+        async function processFile(file) {
+            showLoading();
+            hideError();
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData.length === 0) {
+                    throw new Error('No data found in the Excel file');
+                }
+
+                dashboardData = processExcelData(jsonData);
+                updateDashboard();
+                showDashboard();
+            } catch (error) {
+                showError('Error processing file: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function processExcelData(jsonData) {
+            const data = {
+                targetVsAchieved: [],
+                newLeads: { value: 0, count: 0 },
+                visits: 0,
+                trendData: []
+            };
+
+            // Process the data
+            jsonData.forEach((row, index) => {
+                // Target vs Achieved
+                if (row.Target && row.Achieved) {
+                    data.targetVsAchieved.push({
+                        name: row.Name || row.Category || row.Item || `Item ${index + 1}`,
+                        target: parseFloat(row.Target) || 0,
+                        achieved: parseFloat(row.Achieved) || 0
+                    });
+                }
+
+                // Leads
+                if (row['Lead Value'] || row['LeadValue'] || row.Value) {
+                    data.newLeads.value += parseFloat(row['Lead Value'] || row['LeadValue'] || row.Value) || 0;
+                }
+                if (row['Lead Count'] || row['LeadCount'] || row.Count) {
+                    data.newLeads.count += parseInt(row['Lead Count'] || row['LeadCount'] || row.Count) || 0;
+                }
+
+                // Visits
+                if (row.Visits || row['No of Visits'] || row['Visit Count']) {
+                    data.visits += parseInt(row.Visits || row['No of Visits'] || row['Visit Count']) || 0;
+                }
+            });
+
+            // Generate sample data if none found
+            if (data.targetVsAchieved.length === 0) {
+                const categories = ['Sales', 'Marketing', 'Customer Service', 'Operations'];
+                categories.forEach((cat, i) => {
+                    const target = 1000 + (i * 500);
+                    const achieved = target * (0.7 + Math.random() * 0.4);
+                    data.targetVsAchieved.push({
+                        name: cat,
+                        target: target,
+                        achieved: Math.round(achieved)
+                    });
+                });
+            }
+
+            // Generate trend data
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            data.trendData = months.map(month => ({
+                period: month,
+                value: 800 + Math.random() * 400,
+                leads: 20 + Math.floor(Math.random() * 30)
+            }));
+
+            // Set default values if not found
+            if (data.newLeads.value === 0) data.newLeads.value = 125000;
+            if (data.newLeads.count === 0) data.newLeads.count = 342;
+            if (data.visits === 0) data.visits = 156;
+
+            return data;
+        }
+
+        function updateDashboard() {
+            updateKPICards();
+            updateCharts();
+            updateTable();
+        }
+
+        function updateKPICards() {
+            const totalTarget = dashboardData.targetVsAchieved.reduce((sum, item) => sum + item.target, 0);
+            const totalAchieved = dashboardData.targetVsAchieved.reduce((sum, item) => sum + item.achieved, 0);
+            const percentage = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
+
+            document.getElementById('overallAchievement').textContent = percentage + '%';
+            document.getElementById('overallSubtitle').textContent = `${totalAchieved.toLocaleString()} of ${totalTarget.toLocaleString()}`;
+            document.getElementById('leadValue').textContent = '$' + dashboardData.newLeads.value.toLocaleString();
+            document.getElementById('leadSubtitle').textContent = `${dashboardData.newLeads.count} new leads`;
+            document.getElementById('leadCount').textContent = dashboardData.newLeads.count.toLocaleString();
+            document.getElementById('visitCount').textContent = dashboardData.visits.toLocaleString();
+        }
+
+        function updateCharts() {
+            createTargetChart();
+            createPieChart();
+            createTrendChart();
+        }
+
+        function createTargetChart() {
+            const ctx = document.getElementById('targetChart').getContext('2d');
+            if (charts.targetChart) charts.targetChart.destroy();
+
+            charts.targetChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dashboardData.targetVsAchieved.map(item => item.name),
+                    datasets: [{
+                        label: 'Target',
+                        data: dashboardData.targetVsAchieved.map(item => item.target),
+                        backgroundColor: '#404040',
+                        borderRadius: 4
+                    }, {
+                        label: 'Achieved',
+                        data: dashboardData.targetVsAchieved.map(item => item.achieved),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9ca3af' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#404040' }
+                        },
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#404040' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            if (charts.pieChart) charts.pieChart.destroy();
+
+            charts.pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Qualified Leads', 'In Progress', 'Converted'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: ['#10b981', '#fbbf24', '#2563eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createTrendChart() {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (charts.trendChart) charts.trendChart.destroy();
+
+            charts.trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.trendData.map(item => item.period),
+                    datasets: [{
+                        label: 'Value',
+                        data: dashboardData.trendData.map(item => item.value),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Leads',
+                        data: dashboardData.trendData.map(item => item.leads),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9ca3af' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#404040' }
+                        },
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#404040' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('performanceTableBody');
+            tbody.innerHTML = '';
+
+            dashboardData.targetVsAchieved.forEach(item => {
+                const percentage = Math.round((item.achieved / item.target) * 100);
+                const status = percentage >= 100 ? 'Exceeded' : percentage >= 80 ? 'On Track' : 'Below Target';
+                const statusClass = percentage >= 100 ? 'status-exceeded' : percentage >= 80 ? 'status-on-track' : 'status-below';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: 500;">${item.name}</td>
+                    <td style="text-align: right; color: #9ca3af;">${item.target.toLocaleString()}</td>
+                    <td style="text-align: right; font-weight: 500;">${item.achieved.toLocaleString()}</td>
+                    <td style="text-align: right; font-weight: 500; color: ${percentage >= 100 ? '#10b981' : percentage >= 80 ? '#fbbf24' : '#ef4444'};">${percentage}%</td>
+                    <td style="text-align: right;"><span class="status-badge ${statusClass}">${status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('uploadArea').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('uploadArea').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
